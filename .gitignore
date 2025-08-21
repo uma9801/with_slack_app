@@ -168,3 +168,20 @@ cython_debug/
 .db_service/
 .chroma/
 logs/
+
+# push時に.db内ファイルが50Mを超えるとエラーになるので、.db内のファイルを無視する
+# ===============================
+# Database / Vector stores / Cache
+# ===============================
+db/
+*.db
+*.sqlite
+*.sqlite3
+*.bin
+*.jsonl
+
+# 特定のアプリ用キャッシュ
+.chroma/           # ChromaDB
+.faiss/            # Faiss
+.weaviate/         # Weaviate cache
+.db/               # あなたのケースで生成されていたフォルダ

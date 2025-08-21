@@ -120,6 +120,11 @@ def initialize_agent_executor():
     st.session_state.service_doc_chain = utils.create_rag_chain(ct.DB_SERVICE_PATH)
     st.session_state.company_doc_chain = utils.create_rag_chain(ct.DB_COMPANY_PATH)
     st.session_state.rag_chain = utils.create_rag_chain(ct.DB_ALL_PATH)
+    
+    # 追加Tool用のChainを作成
+    st.session_state.shareholder_benefit_doc_chain = utils.create_rag_chain(ct.DB_SHAREHOLDER_BENEFIT_PATH)
+    st.session_state.product_doc_chain = utils.create_rag_chain(ct.DB_SEARCH_PRODUCT_PATH)
+    st.session_state.ecotee_creator_doc_chain = utils.create_rag_chain(ct.DB_SEARCH_ECOTEE_CREATOR_PATH)
 
     # Web検索用のToolを設定するためのオブジェクトを用意
     search = SerpAPIWrapper()
@@ -148,6 +153,26 @@ def initialize_agent_executor():
             name = ct.SEARCH_WEB_INFO_TOOL_NAME,
             func=search.run,
             description=ct.SEARCH_WEB_INFO_TOOL_DESCRIPTION
+        ),
+        
+        # 追加ツール
+        # 株主優待に関する検索用のTool
+        Tool(
+            name=ct.SEARCH_SHAREHOLDER_BENEFIT_INFO_TOOL_NAME,
+            func=utils.run_shareholder_benefit_doc_chain,
+            description=ct.SEARCH_SHAREHOLDER_BENEFIT_INFO_TOOL_DESCRIPTION
+        ),
+        # 商品に関する検索用のTool
+        Tool(
+            name=ct.SEARCH_PRODUCT_INFO_TOOL_NAME,
+            func=utils.run_product_doc_chain,
+            description=ct.SEARCH_PRODUCT_INFO_TOOL_DESCRIPTION
+        ),
+        # Webサービス「EcoTee Creator」と代行出荷サービスに関する検索用のTool
+        Tool(
+            name=ct.SEARCH_ECOTEE_CREATOR_INFO_TOOL_NAME,
+            func=utils.run_ecotee_creator_doc_chain,
+            description=ct.SEARCH_ECOTEE_CREATOR_INFO_TOOL_DESCRIPTION
         )
     ]
 

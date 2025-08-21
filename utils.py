@@ -77,6 +77,14 @@ def create_rag_chain(db_name):
             # フォルダ内の各ファイルのデータをリストに追加
             add_docs(f"{ct.RAG_TOP_FOLDER_PATH}/{folder_path}", docs_all)
     # AIエージェント機能を使う場合の処理
+
+    # 追加ツールの処理
+    elif db_name in ct.ADDITIONAL_DB_NAMES:
+        # データベース名に対応した、RAG化対象のデータ群が格納されているファイルパスまたはフォルダパスを取得
+        target_path = ct.ADDITIONAL_DB_NAMES[db_name]
+        # ファイル単体またはフォルダ内の各ファイルのデータをリストに追加
+        additional_tools_add_docs(db_name, target_path, docs_all)
+
     else:
         # データベース名に対応した、RAG化対象のデータ群が格納されているフォルダパスを取得
         folder_path = ct.DB_NAMES[db_name]
@@ -99,6 +107,7 @@ def create_rag_chain(db_name):
     embeddings = OpenAIEmbeddings()
 
     # すでに対象のデータベースが作成済みの場合は読み込み、未作成の場合は新規作成する
+    # 疑問点：.dbでは全て同じ名前でデータベースが扱われないか？persist_directory=db_nameのようにしないといけないのでは？
     if os.path.isdir(db_name):
         db = Chroma(persist_directory=".db", embedding_function=embeddings)
     else:
@@ -154,6 +163,62 @@ def add_docs(folder_path, docs_all):
         docs_all.extend(docs)
 
 
+# 追加ツール用
+def additional_tools_add_docs(db_name, target_path, docs_all):
+    """
+    ファイルからデータを読み込む
+
+    Args:
+        db_name: データベース名
+        target_path: ファイルまたはフォルダのパス
+        docs_all: 各ファイルデータを格納するリスト
+    """
+    # 株主優待.pdfのデータを読み込む場合
+    if db_name == ct.DB_SHAREHOLDER_BENEFIT_PATH:
+        # ファイルの拡張子を取得
+        file_extension = os.path.splitext(target_path)[1]
+        # 想定していたファイル形式の場合のみ読み込む
+        if file_extension == ".pdf":
+            # ファイルの拡張子に合ったdata loaderを使ってデータ読み込み
+            loader = ct.SUPPORTED_EXTENSIONS[file_extension](target_path)
+        else:
+            return
+        docs = loader.load()
+        docs_all.extend(docs)
+        return
+
+    # 自社の商品に関するデータを読み込む場合
+    elif db_name == ct.DB_SEARCH_PRODUCT_PATH:
+        files = os.listdir(target_path)
+        for file in files:
+            # ファイルの拡張子を取得
+            file_extension = os.path.splitext(file)[1]
+            # 商品情報はpdfファイルに記載されているのでpdfのみ読み込む
+            if file_extension == ".pdf":
+                # ファイルの拡張子に合ったdata loaderを使ってデータ読み込み
+                loader = ct.SUPPORTED_EXTENSIONS[file_extension](f"{target_path}/{file}")
+            else:
+                continue
+            docs = loader.load()
+            docs_all.extend(docs)
+        return
+    
+    # 自社のWebサービス「EcoTee Creator」と代行出荷サービスに関するデータを読み込む場合
+    elif db_name == ct.DB_SEARCH_ECOTEE_CREATOR_PATH:
+        files = os.listdir(target_path)
+        for file in files:
+            # ファイルの拡張子を取得
+            file_extension = os.path.splitext(file)[1]
+            # Webサービスに関する情報はdocxファイルに記載されているのでpdfのみ読み込む
+            if file_extension == ".docx":
+                # ファイルの拡張子に合ったdata loaderを使ってデータ読み込み
+                loader = ct.SUPPORTED_EXTENSIONS[file_extension](f"{target_path}/{file}")
+            else:
+                continue
+            docs = loader.load()
+            docs_all.extend(docs)
+
+
 def run_company_doc_chain(param):
     """
     会社に関するデータ参照に特化したTool設定用の関数
@@ -201,6 +266,64 @@ def run_customer_doc_chain(param):
     """
     # 顧客とのやり取りに関するデータ参照に特化したChainを実行してLLMからの回答取得
     ai_msg = st.session_state.customer_doc_chain.invoke({"input": param, "chat_history": st.session_state.chat_history})
+
+    # 会話履歴への追加
+    st.session_state.chat_history.extend([HumanMessage(content=param), AIMessage(content=ai_msg["answer"])])
+
+    return ai_msg["answer"]
+
+
+# 追加ツール用の関数
+def run_shareholder_benefit_doc_chain(param):
+    """
+    株主優待に関するデータ参照に特化したTool設定用の関数
+
+    Args:
+        param: ユーザー入力値
+    
+    Returns:
+        LLMからの回答
+    """
+    # 株主優待に関するデータ参照に特化したChainを実行してLLMからの回答取得
+    ai_msg = st.session_state.shareholder_benefit_doc_chain.invoke({"input": param, "chat_history": st.session_state.chat_history})
+
+    # 会話履歴への追加
+    st.session_state.chat_history.extend([HumanMessage(content=param), AIMessage(content=ai_msg["answer"])])
+
+    return ai_msg["answer"]
+
+
+def run_product_doc_chain(param):
+    """
+    商品に関するデータ参照に特化したTool設定用の関数
+
+    Args:
+        param: ユーザー入力値
+    
+    Returns:
+        LLMからの回答
+    """
+    # 商品に関するデータ参照に特化したChainを実行してLLMからの回答取得
+    ai_msg = st.session_state.product_doc_chain.invoke({"input": param, "chat_history": st.session_state.chat_history})
+
+    # 会話履歴への追加
+    st.session_state.chat_history.extend([HumanMessage(content=param), AIMessage(content=ai_msg["answer"])])
+
+    return ai_msg["answer"]
+
+
+def run_ecotee_creator_doc_chain(param):
+    """
+    Webサービス「EcoTee Creator」と代行出荷サービスに関するデータ参照に特化したTool設定用の関数
+
+    Args:
+        param: ユーザー入力値
+
+    Returns:
+        LLMからの回答
+    """
+    # Webサービス「EcoTee Creator」と代行出荷サービスに関するデータ参照に特化したChainを実行してLLMからの回答取得
+    ai_msg = st.session_state.ecotee_creator_doc_chain.invoke({"input": param, "chat_history": st.session_state.chat_history})
 
     # 会話履歴への追加
     st.session_state.chat_history.extend([HumanMessage(content=param), AIMessage(content=ai_msg["answer"])])

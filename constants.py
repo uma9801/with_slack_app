@@ -118,6 +118,35 @@ SEARCH_CUSTOMER_COMMUNICATION_INFO_TOOL_DESCRIPTION = "顧客とのやりとり�
 SEARCH_WEB_INFO_TOOL_NAME = "search_web_tool"
 SEARCH_WEB_INFO_TOOL_DESCRIPTION = "自社サービス「HealthX」に関する質問で、Web検索が必要と判断した場合に使う"
 
+# 追加ツール用
+
+# 自社「株式会社EcoTee」の株主優待に関するDBパス
+DB_SHAREHOLDER_BENEFIT_PATH = "./.db_shareholder_benefit"
+# 自社の商品に関するDBパス
+DB_SEARCH_PRODUCT_PATH = "./.db_search_product"
+# 自社のWebサービス「EcoTee Creator」と代行出荷サービスに関するDBパス
+DB_SEARCH_ECOTEE_CREATOR_PATH = "./.db_search_ecotee_creator"
+
+# 追加ツール用のDB_NAMESを用意
+ADDITIONAL_DB_NAMES = {
+    # 自社「株式会社EcoTee」の株主優待に関するファイルパス
+    DB_SHAREHOLDER_BENEFIT_PATH: f"{RAG_TOP_FOLDER_PATH}/company/株主優待について.pdf",
+    # 自社の商品に関するフォルダパス
+    DB_SEARCH_PRODUCT_PATH: f"{RAG_TOP_FOLDER_PATH}/service",
+    # 自社のWebサービス「EcoTee Creator」と代行出荷サービスに関するフォルダパス
+    DB_SEARCH_ECOTEE_CREATOR_PATH: f"{RAG_TOP_FOLDER_PATH}/service"
+}
+
+# 自社「株式会社EcoTee」の株主優待に関する情報を参照したい時に使う
+SEARCH_SHAREHOLDER_BENEFIT_INFO_TOOL_NAME = "search_shareholder_benefit_info_tool"
+SEARCH_SHAREHOLDER_BENEFIT_INFO_TOOL_DESCRIPTION = "株主優待に関する情報を参照したい時に使う。質問内容を基に具体的にキーワードを入力する。"
+# 自社の商品に関する情報を参照したい時に使う
+SEARCH_PRODUCT_INFO_TOOL_NAME = "search_product_info_tool"
+SEARCH_PRODUCT_INFO_TOOL_DESCRIPTION = "自社の商品に関する情報を参照したい時に使う。質問内容を基に具体的にキーワードを入力する。"
+# 自社のWebサービス「EcoTee Creator」と代行出荷サービスに関する情報を参照したい時に使う
+SEARCH_ECOTEE_CREATOR_INFO_TOOL_NAME = "search_ecotee_creator_info_tool"
+SEARCH_ECOTEE_CREATOR_INFO_TOOL_DESCRIPTION = "自社のWebサービス「EcoTee Creator」と代行出荷サービスに関する情報を参照したい時に使う。質問内容を基に具体的にキーワードを入力する。"
+
 
 # ==========================================
 # Slack連携関連
@@ -179,6 +208,7 @@ SYSTEM_PROMPT_EMPLOYEE_SELECTION = """
     {format_instruction}
 """
 
+# 【メンション先の選定理由】を追加
 SYSTEM_PROMPT_NOTICE_SLACK = """
     # 役割
     具体的で分量の多いメッセージの作成と、指定のメンバーにメンションを当ててSlackへの送信を行うアシスタント
@@ -207,11 +237,18 @@ SYSTEM_PROMPT_NOTICE_SLACK = """
     - 「メッセージフォーマット」を使い、以下の各項目の文章を生成してください。
         - 【問い合わせ情報】の「カテゴリ」
         - 【問い合わせ情報】の「日時」
+        - 【メンション先の選定理由】
         - 【回答・対応案とその根拠】
 
     - 「顧客から弊社への問い合わせ内容」と「従業員情報と過去の問い合わせ対応履歴」を基に文章を生成してください。
 
     - 【問い合わせ情報】の「カテゴリ」は、【問い合わせ情報】の「問い合わせ内容」を基に適切なものを生成してください。
+
+    - 【メンション先の選定理由】については、以下の条件に従って生成してください。
+        - 従業員名には「さん」を付け、見易いように従業員毎に改行を挟んでください。
+        - メンション先の従業員が問い合わせ内容に対して適切な対応ができると判断した理由を具体的に記述してください。
+        - 少なくとも「立場」「過去の対応内容」「能力」の3つの観点を含めて、メンション先の選定理由を記述してください。
+        - 上記3つの観点に加え、必要に応じて他の観点も含めてください。
 
     - 【回答・対応案】について、以下の条件に従って生成してください。
         - 回答・対応案の内容と、それが良いと判断した根拠を、それぞれ3つずつ生成してください。
@@ -237,7 +274,12 @@ SYSTEM_PROMPT_NOTICE_SLACK = """
     ・問い合わせ者: 山田太郎
     ・日時: {now_datetime}
 
-    --------------------
+    -------------------
+
+    【メンション先の選定理由】
+
+
+    -------------------
 
     【回答・対応案】
     ＜1つ目＞

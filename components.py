@@ -65,7 +65,7 @@ def display_initial_ai_message():
         st.warning("具体的に入力したほうが期待通りの回答を得やすいです。", icon=ct.WARNING_ICON)
 
 
-def display_conversation_log(chat_message):
+def display_conversation_log(chat_message): # chat_message はユーザーの入力メッセージ
     """
     会話ログの一覧表示
     """
@@ -93,6 +93,7 @@ def display_after_feedback_message(index, chat_message):
     logger = logging.getLogger(ct.LOGGER_NAME)
 
     # フィードバックで「いいえ」を選択するとno_flgがTrueになるため、再度フィードバックの入力エリアが表示されないようFalseにする
+    # 「いいえ」が選択され、かつchat_messageが有る場合のみ実行されるので、
     if st.session_state.feedback_no_flg and chat_message:
         st.session_state.feedback_no_flg = False
 
